@@ -1,0 +1,552 @@
+---
+title: "Heart Disease"
+author: "Oruru Ndu-Nwogu"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+```
+
+#### Table of Contents:
+
+ - [About Dataset](#about-dataset)
+ 
+ - [Load Dataset](#load-dataset)
+
+ - [Analysis](#analysis)
+
+ - [Data Preparation](#data-preparation)
+
+ - [Machine Learning Algorithms](#machine-learning-algorithms)
+
+
+
+```{r}
+
+```
+
+#### About Dataset
+
+This dataset, the most comprehensive of its kind for research purposes, was formed by merging five separate heart datasets that had not been previously combined. It encompasses 11 shared features, establishing it as the largest heart disease dataset currently available for research.
+
+##### Citation
+
+All the datasets utilized are available in the UCI Machine Learning Repository under the Index of Heart Disease Datasets, which can be accessed via the following link: https://archive.ics.uci.edu/ml/machine-learning-databases/heart-disease/
+
+##### Attribute Information
+
+This dataset contains 12 attributes used to predict if a patient has a heart condition or not.
+
+- Age: age of the patient [years].
+
+- Sex: sex of the patient [M: Male, F: Female].
+
+- ChestPainType: chest pain type [TA: Typical Angina, ATA: Atypical Angina, NAP: Non-Anginal Pain, ASY: Asymptomatic].
+
+- RestingBP: resting blood pressure [mm Hg].
+
+- Cholesterol: serum cholesterol [mm/dl].
+
+- FastingBS: fasting blood sugar [1: if FastingBS > 120 mg/dl, 0: otherwise].
+
+- RestingECG: resting electrocardiogram results [Normal: Normal, ST: having ST-T wave abnormality (T wave inversions and/or ST elevation or depression of > 0.05 mV), LVH: showing probable or definite left ventricular hypertrophy by Estes' criteria].
+
+- MaxHR: maximum heart rate achieved [Numeric value between 60 and 202].
+
+- ExerciseAngina: exercise-induced angina [Y: Yes, N: No].
+
+- Oldpeak: oldpeak = ST [Numeric value measured in depression].
+
+- ST_Slope: the slope of the peak exercise ST segment [Up: upsloping, Flat: flat, Down: downsloping].
+
+- HeartDisease:(dependent variable) output class [1: heart disease, 0: Normal].
+
+##### Purpose
+
+The aim of this project is to determine whether a patient has a heart condition by employing traditional machine learning algorithms for training, testing, and predicting outcomes. All models will be compared to identify the one with the highest precision, accuracy, and recall. Subsequently, these models will be integrated through ensemble methods to enhance their accuracy, precision, and recall further.
+
+The algorithms to be used are:
+
+- KNN.
+
+- SVM.
+
+- Decision Trees.
+
+- Random Forest.
+
+
+
+#### Load dataset
+
+```{r}
+library(readr)
+heart<-read_csv("~/Downloads/Ind_Proj/heart.csv")
+heart
+str(heart)
+heartanalysis<-heart
+```
+
+#### Analysis
+
+```{r}
+summary(heartanalysis)
+```
+
+```{r}
+dim(heartanalysis)
+```
+
+**Check for na's** 
+
+```{r}
+any(is.na(heartanalysis))
+```
+
+**Check for duplicates**
+
+```{r}
+library(dplyr)
+table(duplicated(heartanalysis))
+```
+
+**Proportions and Visualizations**
+
+**Age**
+
+```{r}
+table(heartanalysis$Age)
+#prop.table(heartanalysis$Age)
+```
+
+```{r}
+library(ggplot2)
+ggplot(data = heartanalysis, aes(x=Age)) +
+  geom_histogram(binwidth = 1, fill = "green", color="black") +
+  geom_text(stat = "count", aes(label=stat(count)), vjust = -0.5, color ="black") +
+  labs(x = "Age", y = "Frequency", title = "Age Distribution")
+```
+
+- Majority of the patients in this dataset are between the ages of 50 and 60 with the most amount of patients being 54 years old.
+
+**Sex**
+
+```{r}
+table(heartanalysis$Sex)
+prop.table(table(heartanalysis$Sex))
+```
+
+```{r}
+ggplot(data = heartanalysis, aes(x = Sex, fill = Sex)) + 
+  geom_bar(stat = "count", color = "black") +
+  geom_text(stat = "count", aes(label = stat(count)), vjust = -0.5) +
+  labs(x = "Sex", y = "Count", title = "Sex Count") +
+  guides(fill = FALSE)
+```
+
+- There were more male patients (725) than female patients (193).
+
+**Chest Pain Type**
+
+```{r}
+#table(heartanalysis$ChestPainType)
+prop.table(table(heartanalysis$ChestPainType))
+```
+
+```{r}
+ggplot(data = heartanalysis, aes(x = ChestPainType, fill = ChestPainType)) + 
+  geom_bar(stat = "count", color = "black") +
+  geom_text(stat = "count", aes(label = stat(count)), vjust = -0.5) +
+  labs(x = "ChestPainType", y = "Count", title = "Chest Pain Type Count") +
+  guides(fill = FALSE)
+```
+
+- 496 patients were diagnosed with Asymptomatic(ASY) Chest Pain.
+
+- 173 patients were diagnosed with Atypical Angina(ATA) Chest Pain.
+
+- 203 patients were diagnosed with Non-Anginal Pain(NAP) Chest Pain.
+
+- 46 patients were diagnosed with Typical Angina(TA) Chest Pain.
+
+
+**RestingBP**
+
+```{r}
+table(heartanalysis$RestingBP)
+#prop.table(table(heartanalysis$RestingBP))
+```
+
+```{r}
+ggplot(data=heartanalysis, aes(x = RestingBP)) +
+  geom_histogram(binwidth = 10, fill = "green", color = "black", alpha = 0.7) +
+  labs(title = "Distribution of Resting Blood Pressure", x = "Resting Blood Pressure", y = "Frequency") +
+  theme_minimal()
+```
+
+- Majority of the patients had resting blood pressures between 100 mm Hg - 160 mm Hg.
+
+**Cholesterol**
+
+```{r}
+table(heartanalysis$Cholesterol)
+prop.table(table(heartanalysis$Cholesterol))
+```
+
+```{r}
+ggplot(data=heartanalysis, aes(x = Cholesterol)) +
+  geom_histogram(binwidth = 10, fill = "green", color = "black", alpha = 0.7) +
+  labs(title = "Distribution of Cholesterol Levels", x = "Cholesterol", y = "Frequency") +
+  theme_minimal()
+```
+
+- Majority of the patients had zero cholesterol levels  a fewer registering between 200mm/dl - 350mm/dl.
+
+**Fasting BS**
+
+```{r}
+table(heartanalysis$FastingBS)
+prop.table(table(heartanalysis$FastingBS))
+```
+
+```{r}
+ggplot(data = heartanalysis, aes(x = FastingBS, fill = FastingBS)) + 
+  geom_bar(stat = "count", color = "black") +
+  geom_text(stat = "count", aes(label = stat(count)), vjust = -0.5) +
+  labs(x = "Fasting Blood Sugar", y = "Count", title = "Fasting Blood Sugar Count") +
+  guides(fill = FALSE)
+```
+
+- 214 patients registered fasting blood sugar levels that were greater than 120 mg/dl while 704 patients had less than 120 mg/dl.
+
+**RestingECG**
+
+```{r}
+table(heartanalysis$RestingECG)
+prop.table(table(heartanalysis$RestingECG))
+```
+
+```{r}
+ggplot(data = heartanalysis, aes(x = RestingECG, fill = RestingECG)) + 
+  geom_bar(stat = "count", color = "black") +
+  geom_text(stat = "count", aes(label = stat(count)), vjust = -0.5) +
+  labs(x = "RestingECG", y = "Count", title = "Resting ECG Type Count") +
+  guides(fill = FALSE)
+```
+
+- 188 patients showed probable or definite left ventricular hypertrophy by Estes' criteria(LVH).
+
+- 552 patients had normal resting electrocardiogram(RestingECG) results.
+
+- 178 patients had ST-T wave abnormality.
+
+**MaxHR**
+
+```{r}
+table(heartanalysis$MaxHR)
+prop.table(table(heartanalysis$MaxHR))
+```
+
+```{r}
+ggplot(data=heartanalysis, aes(x = MaxHR)) +
+  geom_histogram(binwidth = 10, fill = "green", color = "black", alpha = 0.7) +
+  labs(title = "Distribution of Heart Rate", x = "MaxHR", y = "Frequency") +
+  theme_minimal()
+```
+
+- Majority of the patients had a maximum heart rate between 100 and 170.
+
+**Exercise Angina**
+
+```{r}
+table(heartanalysis$ExerciseAngina)
+prop.table(table(heartanalysis$ExerciseAngina))
+```
+
+```{r}
+ggplot(data = heartanalysis, aes(x = ExerciseAngina, fill = ExerciseAngina)) + 
+  geom_bar(stat = "count", color = "black") +
+  geom_text(stat = "count", aes(label = stat(count)), vjust = -0.5) +
+  labs(x = "ExerciseAngina", y = "Count", title = "ExerciseAngina Count") +
+  guides(fill = FALSE)
+```
+
+- Majority of the patients (547) didn't have exercised-induced angina.
+
+**Old Peak**
+
+```{r}
+table(heartanalysis$Oldpeak)
+prop.table(table(heartanalysis$Oldpeak))
+```
+
+```{r}
+ggplot(data=heartanalysis, aes(x = Oldpeak)) +
+  geom_histogram(binwidth = 10, fill = "green", color = "black", alpha = 0.7) +
+  labs(title = "Distribution of Old Peak", x = "OldPeak", y = "Frequency") +
+  theme_minimal()
+```
+
+**ST_Slope**
+
+```{r}
+table(heartanalysis$ST_Slope)
+prop.table(table(heartanalysis$ST_Slope))
+```
+
+```{r}
+ggplot(data = heartanalysis, aes(x = ST_Slope, fill = ST_Slope)) + 
+  geom_bar(stat = "count", color = "black") +
+  geom_text(stat = "count", aes(label = stat(count)), vjust = -0.5) +
+  labs(x = "ST Slope", y = "Count", title = "ST Slope Count") +
+  guides(fill = FALSE)
+```
+
+- There were 63 patients with downsloping peak exercise ST segment.
+
+- There were 460 patients with flat peak exercise ST segment.
+
+- There were 395 patients with upsloping peak exercise ST segment.
+
+**HeartDisease**
+
+```{r}
+table(heartanalysis$HeartDisease)
+prop.table(table(heartanalysis$HeartDisease))
+```
+
+```{r}
+ggplot(data = heartanalysis, aes(x = HeartDisease, fill = HeartDisease)) + 
+  geom_bar(stat = "count", color = "green") +
+  geom_text(stat = "count", aes(label = stat(count)), vjust = -0.5) +
+  labs(x = "Heart Disease", y = "Count", title = "Heart Disease Diagnosis Count") +
+  guides(fill = FALSE)
+```
+
+- 508 patients had a heart disease while 410 had normal heart conditions.
+
+
+
+**Correlation**
+
+```{r}
+cor(heartanalysis[c(1,4,5,6,8,10,12)])
+```
+
+**Correlation Plot**
+
+```{r}
+library(corrplot)
+correlations<-cor(heartanalysis[c(1,4,5,6,8,10,12)])
+corrplot(correlations, method="circle")
+```
+
+**Understanding Correlation Results.**
+
+- Age:
+
+  - RestingBP: Positive correlation (0.254), suggesting that blood pressure tends to increase with age.
+  
+  - Cholesterol: Slightly negative correlation (-0.095), indicating a weak relationship where higher age might correlate with slightly lower cholesterol.
+  
+  - FastingBS: Positive correlation (0.198), indicating that older individuals might have a higher likelihood of elevated fasting blood sugar levels.
+  
+  - MaxHR: Strong negative correlation (-0.382), suggesting that maximum heart rate decreases as age increases.
+  
+  - Oldpeak: Positive correlation (0.259), indicating that older age is associated with higher exercise-induced ST depression.
+  
+  - HeartDisease: Positive correlation (0.282), showing that older age is associated with a higher occurrence of heart disease.
+
+- RestingBP:
+
+  - Cholesterol: Slightly positive correlation (0.101), but this is quite weak, suggesting only a minor relationship.
+  
+  - FastingBS: Very weak positive correlation (0.070).
+  
+  - MaxHR: Negative correlation (-0.112), indicating that higher resting blood pressure may be associated with lower max heart rates.
+  
+  - Oldpeak: Positive correlation (0.165), suggesting higher blood pressure may be related to more pronounced exercise-induced ST depression.
+  
+  - HeartDisease: Positive correlation (0.108), suggesting a relationship, though not very strong, between higher resting blood pressure and heart disease risk.
+  
+- Cholesterol:
+
+  - FastingBS: Negative correlation (-0.261), indicating that higher cholesterol levels might be associated with lower fasting blood sugar levels.
+  
+  - MaxHR: Positive correlation (0.236), suggesting that higher cholesterol levels might correlate with higher maximum heart rates.
+  
+  - Old Peak: Very weak Positve correlation (0.050).
+  
+  - HeartDisease: Negative correlation (-0.233), showing that higher cholesterol levels might be associated with a lower incidence of heart disease.
+
+- FastingBS:
+
+  - MaxHR: Negative correlation (-0.131), indicating that higher fasting blood sugar may be associated with lower maximum heart rates.
+  
+  - Oldpeak: Weak positive correlation (0.053).
+  
+  - HeartDisease: Positive correlation (0.267), indicating a strong relationship between elevated fasting blood sugar and increased risk of heart disease.
+  
+- MaxHR:
+
+  - Oldpeak: Negative correlation (-0.161), suggesting that higher maximum heart rates are associated with less exercise-induced ST depression.
+  
+  - HeartDisease: Strong negative correlation (-0.400), indicating that higher max heart rates are associated with a lower risk of heart disease.
+  
+- Old Peak:
+
+  - HeartDisease: Strong positive correlation (0.404), indicating that higher ST depression during exercise is strongly associated with a higher risk of heart disease.
+  
+- Heart Disease:
+
+  - Age: Strong positive correlation (0.282), indicting the older a person gets, the higher their chances of getting a heart disease are.
+  
+  - RestingBP: weak positive correlation.
+  
+  - Cholesterol: Negative correlation (-0.232), indicating that the there's a lower chance of heart disease with higher cholesterol levels.
+  
+  - FastingBS: Positive correlation (0.267), indicating that higher Fasting blood Sugar increases the chances of a heart disease.
+  
+  - MaxHr: Very strong negative correlation (-0.400) indicating that a high heart rate is associated with a low chance of heart disease.
+  
+  - OldPeak: Very Strong positve correlation (0.403) indicating that higher ST depression levels are associated with a higher chance of a heart disease. 
+
+  
+#### Data Preparation
+
+**Change Character Columns to factors**
+
+```{r}
+heart_label<-heartanalysis
+heart_label
+```
+
+```{r}
+heart_label$Sex<-factor(heart_label$Sex, levels=c("F","M"), labels=c("F", "M"))
+str(heart_label$Sex)
+```
+
+```{r}
+heart_label$ChestPainType<-factor(heart_label$ChestPainType, levels=c("ASY","ATA","NAP","TA"), labels=c("ASY","ATA","NAP","TA"))
+str(heart_label$ChestPainType)
+```
+
+```{r}
+heart_label$RestingECG<-factor(heart_label$RestingECG, levels=c("LVH","Normal","ST"), labels=c("LVH","Normal","ST"))
+str(heart_label$RestingECG)
+```
+
+```{r}
+heart_label$ExerciseAngina<-factor(heart_label$ExerciseAngina, levels=c("N","Y"), labels=c("N", "Y"))
+str(heart_label$ExerciseAngina)
+```
+
+```{r}
+heart_label$ST_Slope<-factor(heart_label$ST_Slope, levels=c("Down","Flat","Up"), labels=c("Down","Flat","Up"))
+str(heart_label$ST_Slope)
+```
+
+```{r}
+heart_label$HeartDisease<-factor(heart_label$HeartDisease, levels=c("0","1"), labels=c("Normal", "Heart Disease"))
+str(heart_label$HeartDisease)
+```
+
+```{r}
+str(heart_label)
+View(heart_label)
+```
+
+**Use one-hot encoding to split categorical column into separate columns, each having binary values.**
+
+- This is mainly for KNN and SVM.
+
+```{r}
+one_hot_encode <- function(data, cols) {
+  for (col in cols) {
+    dummies <- as.data.frame(model.matrix(~ . - 1, data.frame(data[[col]])))
+    names(dummies) <- sub("^.+\\.", paste0(col, "_"), names(dummies))
+    data <- cbind(data, dummies)
+    data[[col]] <- NULL  
+  }
+  return(data)
+}
+cols_to_encode <- c("Sex", "ChestPainType", "RestingECG", "ExerciseAngina", "ST_Slope")
+heart_encoded<-heart_label
+heart_encoded <- one_hot_encode(heart_encoded, cols_to_encode)
+```
+
+```{r}
+View(heart_encoded)
+dim(heart_encoded)
+```
+
+**Normalize the Encoded Dataset.**
+
+```{r}
+normalize<-function(x){
+  return((x-min(x))/(max(x)-min(x)))
+}
+normalized_heart_encoded<- heart_encoded
+normalized_column<-c(1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21)
+normalized_heart_encoded[normalized_column]<-as.data.frame(lapply(normalized_heart_encoded[normalized_column] , normalize))
+```
+
+```{r}
+summary(normalized_heart_encoded)
+View(normalized_heart_encoded)
+```
+
+**Create labelled and unlabelled datasets for KNN.**
+
+```{r}
+knn_heart_label<-normalized_heart_encoded
+knn_heart_nolabel<-normalized_heart_encoded[-7]
+View(knn_heart_nolabel)
+```
+
+**Create dataset for SVM**
+
+```{r}
+svm_heart<-normalized_heart_encoded
+```
+
+**Create and normalize dataset for Decision Trees & Random Forest using the regular dataset.**
+
+```{r}
+decision_tree_heart<-heart_label
+normal_col<-c(1, 4, 5, 6, 8, 10)
+decision_tree_heart[normal_col]<-as.data.frame(lapply(decision_tree_heart[normal_col], normalize))
+summary(decision_tree_heart)
+```
+
+```{r}
+random_forest_heart<-heart_label
+random_forest_heart[normal_col]<-as.data.frame(lapply(random_forest_heart[normal_col], normalize))
+summary(random_forest_heart)
+```
+
+#### Machine Learning Algorithms
+
+```{r}
+library(reticulate)
+#use_python("/Users/owner/opt/anaconda3/bin/python3")
+use_condaenv("myenv", required = TRUE)
+```
+
+
+```{python}
+
+```
+
+
+
+
+
+
+
+```{r}
+
+```
+
